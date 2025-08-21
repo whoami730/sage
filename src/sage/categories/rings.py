@@ -18,6 +18,7 @@ from types import GeneratorType
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_import import LazyImport
 from sage.misc.prandom import randint
+from sage.categories.cartesian_product import CartesianProductsCategory
 from sage.categories.category_with_axiom import CategoryWithAxiom
 from sage.categories.rngs import Rngs
 from sage.categories.sets_cat import Sets
@@ -1913,6 +1914,19 @@ class Rings(CategoryWithAxiom):
             return q
 
     class CartesianProducts(CartesianProductsCategory):
+        def extra_super_categories(self):
+            """
+            Implement the fact that a Cartesian product of rings is a ring.
+
+            EXAMPLES::
+
+                sage: Rings().CartesianProducts().extra_super_categories()
+                [Category of rings]
+                sage: cartesian_product([MatrixSpace(RR, 3), MatrixSpace(RR, 2)]) in Rings()
+                True
+            """
+            return [Rings()]
+
         class ParentMethods:
             @property
             @cached_method
@@ -1956,6 +1970,26 @@ class Rings(CategoryWithAxiom):
                     True
                 """
                 return len(self.__nonzero_factors) == 1 and self.__nonzero_factors[0].is_integral_domain(proof=proof)
+
+        class ElementMethods:
+            def is_unit(self):
+                r"""
+                Return ``True`` is ``self`` is invertible.
+
+                A cartesian product element is a unit if and only if all of its
+                factors are units.
+
+                EXAMPLES::
+
+                    sage: R = cartesian_product([QQ, QQ])
+                    sage: a = R((1, 2))
+                    sage: a.is_unit()
+                    True
+                    sage: e = R((1, 0))
+                    sage: e.is_unit()
+                    False
+                """
+                return all([_.is_unit() for _ in self.cartesian_factors()])
 
 
 def _gen_names(elts):
